@@ -15,15 +15,23 @@ def inventory_report():
 
     with open(PRODUCTS_FILE, "r", newline="") as file:
         reader = csv.DictReader(file)
-        products = list(reader)
+        if reader.fieldnames is None:
+            print("No products available.")
+            return
+        products = [row for row in reader if any(row.values())]
 
     if not products:
         print("No products available.")
         return
 
     total_products = len(products)
-    total_categories = len(set(p["Category"] for p in products))
-    total_stock = sum(int(p["Quantity"]) for p in products)
+    total_categories = len(set(p.get("Category", "") for p in products if p.get("Category", "")))
+    total_stock = 0
+    for p in products:
+        try:
+            total_stock += int(p.get("Quantity", 0))
+        except ValueError:
+            continue
 
     print("\n" + "=" * 40)
     print("       INVENTORY REPORT")
@@ -43,21 +51,32 @@ def sales_report():
 
     with open(SALES_FILE, "r", newline="") as file:
         reader = csv.DictReader(file)
-        sales = list(reader)
+        if reader.fieldnames is None:
+            print("No sales available.")
+            return
+        sales = [row for row in reader if any(row.values())]
 
     if not sales:
         print("No sales available.")
         return
 
     total_sales = len(sales)
-    total_revenue = sum(float(s["Total Amount"]) for s in sales)
+    total_revenue = 0.0
+    for s in sales:
+        try:
+            total_revenue += float(s.get("Total Amount", 0))
+        except ValueError:
+            continue
 
     product_counter = Counter()
 
     for sale in sales:
-        product_counter[sale["Product Name"]] += int(sale["Quantity Sold"])
+        try:
+            product_counter[sale["Product Name"]] += int(sale["Quantity Sold"])
+        except (ValueError, KeyError, TypeError):
+            continue
 
-    most_sold_product = product_counter.most_common(1)[0][0]
+    most_sold_product = product_counter.most_common(1)[0][0] if product_counter else "—"
 
     print("\n" + "=" * 40)
     print("          SALES REPORT")

@@ -36,6 +36,18 @@ LOW_STOCK_THRESHOLD = 10
 # DATA STORAGE: CSV HELPERS
 # ─────────────────────────────────────────────
 
+def normalize_product_row(row):
+    return {
+        "product_id": (row.get("product_id") or row.get("Product ID") or row.get("ProductId") or "").strip(),
+        "name": (row.get("name") or row.get("Product Name") or row.get("ProductName") or "").strip(),
+        "category": (row.get("category") or row.get("Category") or "").strip(),
+        "price": row.get("price") or row.get("Price") or "0",
+        "quantity": row.get("quantity") or row.get("Quantity") or "0",
+        "supplier": (row.get("supplier") or row.get("Supplier") or "").strip(),
+        "image_path": (row.get("image_path") or row.get("Image Path") or "").strip(),
+    }
+
+
 def load_products():
     products = []
     if not os.path.exists(PRODUCTS_FILE):
@@ -43,10 +55,18 @@ def load_products():
     with open(PRODUCTS_FILE, "r", newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            row["price"] = float(row["price"])
-            row["quantity"] = int(row["quantity"])
-            row["image_path"] = row.get("image_path", "") or ""
-            products.append(row)
+            if not any(row.values()):
+                continue
+            product = normalize_product_row(row)
+            try:
+                product["price"] = float(product["price"])
+            except ValueError:
+                product["price"] = 0.0
+            try:
+                product["quantity"] = int(float(product["quantity"]))
+            except ValueError:
+                product["quantity"] = 0
+            products.append(product)
     return products
 
 

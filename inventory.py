@@ -14,11 +14,15 @@ FIELDS = [
 ]
 
 
-def initialize_products():
-    if not os.path.exists(PRODUCTS_FILE):
-        with open(PRODUCTS_FILE, "w", newline="") as file:
+def ensure_csv_header(file_path, fieldnames):
+    if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+        with open(file_path, "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(FIELDS)
+            writer.writerow(fieldnames)
+
+
+def initialize_products():
+    ensure_csv_header(PRODUCTS_FILE, FIELDS)
 
 
 initialize_products()
@@ -29,6 +33,8 @@ def read_products():
     with open(PRODUCTS_FILE, "r", newline="") as file:
         reader = csv.DictReader(file)
         for row in reader:
+            if not any(row.values()):
+                continue
             products.append(row)
     return products
 
@@ -43,25 +49,41 @@ def write_products(products):
 def add_product():
     products = read_products()
 
-    product_id = input("Enter Product ID: ")
+    product_id = input("Enter Product ID: ").strip()
+    if not product_id:
+        print("Error: Product ID is required.")
+        return
 
     for product in products:
-        if product["Product ID"] == product_id:
+        if product["Product ID"].strip().lower() == product_id.lower():
             print("Error: Product ID already exists.")
             return
 
-    name = input("Enter Product Name: ")
-    category = input("Enter Category: ")
-    price = input("Enter Price: ")
-    quantity = input("Enter Quantity: ")
-    supplier = input("Enter Supplier Name: ")
+    name = input("Enter Product Name: ").strip()
+    if not name:
+        print("Error: Product Name is required.")
+        return
+
+    category = input("Enter Category: ").strip()
+    price_text = input("Enter Price: ").strip()
+    quantity_text = input("Enter Quantity: ").strip()
+    supplier = input("Enter Supplier Name: ").strip()
+
+    try:
+        price = float(price_text)
+        quantity = int(quantity_text)
+        if price < 0 or quantity < 0:
+            raise ValueError
+    except ValueError:
+        print("Error: Price and Quantity must be valid non-negative numbers.")
+        return
 
     products.append({
         "Product ID": product_id,
         "Product Name": name,
         "Category": category,
-        "Price": price,
-        "Quantity": quantity,
+        "Price": str(price),
+        "Quantity": str(quantity),
         "Supplier": supplier
     })
 
@@ -135,13 +157,21 @@ def update_product():
             quantity = input(f"Quantity ({product['Quantity']}): ")
 
             if name:
-                product["Product Name"] = name
+                product["Product Name"] = name.strip()
             if category:
-                product["Category"] = category
+                product["Category"] = category.strip()
             if price:
-                product["Price"] = price
+                try:
+                    product["Price"] = str(float(price.strip()))
+                except ValueError:
+                    print("Invalid price value.")
+                    return
             if quantity:
-                product["Quantity"] = quantity
+                try:
+                    product["Quantity"] = str(int(quantity.strip()))
+                except ValueError:
+                    print("Invalid quantity value.")
+                    return
 
             write_products(products)
             print("Product updated successfully.")
@@ -175,8 +205,21 @@ def add_stock():
 
     for product in products:
         if product["Product ID"] == product_id:
-            qty = int(input("Enter quantity to add: "))
-            product["Quantity"] = str(int(product["Quantity"]) + qty)
+            qty_text = input("Enter quantity to add: ").strip()
+            try:
+                qty = int(qty_text)
+                if qty <= 0:
+                    raise ValueError
+            except ValueError:
+                print("Error: Quantity must be a positive integer.")
+                return
+
+            try:
+                current_qty = int(product["Quantity"])
+            except ValueError:
+                current_qty = 0
+
+            product["Quantity"] = str(current_qty + qty)
 
             write_products(products)
             print("Stock updated successfully.")

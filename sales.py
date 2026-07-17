@@ -15,11 +15,15 @@ SALES_FIELDS = [
 ]
 
 
-def initialize_sales():
-    if not os.path.exists(SALES_FILE):
-        with open(SALES_FILE, "w", newline="") as file:
+def ensure_csv_header(file_path, fieldnames):
+    if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+        with open(file_path, "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(SALES_FIELDS)
+            writer.writerow(fieldnames)
+
+
+def initialize_sales():
+    ensure_csv_header(SALES_FILE, SALES_FIELDS)
 
 
 initialize_sales()
@@ -31,6 +35,8 @@ def read_products():
         with open(PRODUCTS_FILE, "r", newline="") as file:
             reader = csv.DictReader(file)
             for row in reader:
+                if not any(row.values()):
+                    continue
                 products.append(row)
     return products
 
@@ -58,20 +64,32 @@ def record_sale():
 
     for product in products:
 
-        if product["Product ID"] == product_id:
-
-            quantity_sold = int(input("Enter Quantity Sold: "))
-            available_quantity = int(product["Quantity"])
-
-            if quantity_sold <= 0:
+        if product["Product ID"].strip() == product_id.strip():
+            quantity_text = input("Enter Quantity Sold: ").strip()
+            try:
+                quantity_sold = int(quantity_text)
+                if quantity_sold <= 0:
+                    raise ValueError
+            except ValueError:
                 print("Invalid quantity.")
+                return
+
+            try:
+                available_quantity = int(product["Quantity"])
+            except ValueError:
+                print("Invalid product stock value.")
                 return
 
             if quantity_sold > available_quantity:
                 print("Insufficient stock.")
                 return
 
-            unit_price = float(product["Price"])
+            try:
+                unit_price = float(product["Price"])
+            except ValueError:
+                print("Invalid product price.")
+                return
+
             total_amount = unit_price * quantity_sold
 
             product["Quantity"] = str(
@@ -110,10 +128,16 @@ def sales_summary():
 
     with open(SALES_FILE, "r", newline="") as file:
         reader = csv.DictReader(file)
+        if reader.fieldnames is None:
+            print("No sales found.")
+            return
 
         for sale in reader:
-            total_products += int(sale["Quantity Sold"])
-            total_revenue += float(sale["Total Amount"])
+            try:
+                total_products += int(sale["Quantity Sold"])
+                total_revenue += float(sale["Total Amount"])
+            except (ValueError, KeyError, TypeError):
+                continue
 
     print("\n========== SALES SUMMARY ==========")
     print(f"Total Products Sold : {total_products}")
