@@ -119,31 +119,68 @@ LAYOUT = """
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Inventory Management System</title>
+  <title>{{ title }} | InfoBharat Items</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f6fb; }
+    .page-header { background: linear-gradient(135deg, #0d6efd 0%, #5a8dee 100%); color: white; }
+    .page-header .lead { opacity: .85; }
+    .card-soft { border: 1px solid rgba(13, 110, 253, .1); }
+    .nav-link.active { color: #fff !important; font-weight: 600; }
+    .footer { font-size: .9rem; color: #6c757d; }
+  </style>
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<body>
+  <header class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container">
-      <a class="navbar-brand" href="{{ url_for('index') }}">📦 InfoBharat Items</a>
-      <div class="navbar-nav">
-        <a class="nav-link" href="{{ url_for('products_list') }}">Products</a>
-        <a class="nav-link" href="{{ url_for('add_product') }}">Add Product</a>
-        <a class="nav-link" href="{{ url_for('low_stock') }}">Low Stock</a>
-        <a class="nav-link" href="{{ url_for('record_sale') }}">Record Sale</a>
-        <a class="nav-link" href="{{ url_for('sales_list') }}">Sales</a>
-        <a class="nav-link" href="{{ url_for('reports') }}">Reports</a>
+      <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">📦 InfoBharat Items</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('products_list') }}">Products</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('low_stock') }}">Low Stock</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('sales_list') }}">Sales</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('reports') }}">Reports</a></li>
+        </ul>
       </div>
     </div>
-  </nav>
-  <div class="container mb-5">
+  </header>
+
+  <main class="container py-4">
+    <section class="page-header rounded-4 p-4 mb-4 shadow-sm">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="h2 mb-2">{{ title }}</h1>
+          <p class="lead mb-0">Manage inventory, sales and reports with a clean, modern dashboard.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <a href="{{ url_for('add_product') }}" class="btn btn-light btn-sm shadow-sm">Add Product</a>
+          <a href="{{ url_for('record_sale') }}" class="btn btn-outline-light btn-sm shadow-sm">Record Sale</a>
+        </div>
+      </div>
+    </section>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
       {% endfor %}
     {% endwith %}
-    {{ body|safe }}
-  </div>
+
+    <div class="mb-5">{{ body|safe }}</div>
+  </main>
+
+  <footer class="footer text-center py-3">
+    <div class="container">Made for InfoBharat Items | Inventory Management System</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 """
